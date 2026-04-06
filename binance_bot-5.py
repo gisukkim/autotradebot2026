@@ -92,6 +92,14 @@ SHUTDOWN_SENT = False
 # ============================================================
 
 SHORT_TRADING_CONFIGS = [
+    # Bitget 6코인 (숏 파라미터)
+    {'symbol': 'BTCUSDT', 'ma_period': 254, 'stoch_k_period': 27, 'stoch_k_smooth': 23, 'stoch_d_period': 19, 'leverage': 1},
+    {'symbol': 'ETHUSDT', 'ma_period': 220, 'stoch_k_period': 31, 'stoch_k_smooth': 44, 'stoch_d_period': 26, 'leverage': 2},
+    {'symbol': 'XRPUSDT', 'ma_period': 269, 'stoch_k_period': 121, 'stoch_k_smooth': 35, 'stoch_d_period': 47, 'leverage': 1},
+    {'symbol': 'SOLUSDT', 'ma_period': 314, 'stoch_k_period': 37, 'stoch_k_smooth': 34, 'stoch_d_period': 44, 'leverage': 1},
+    {'symbol': 'DOGEUSDT', 'ma_period': 250, 'stoch_k_period': 36, 'stoch_k_smooth': 15, 'stoch_d_period': 40, 'leverage': 1},
+    {'symbol': 'ADAUSDT', 'ma_period': 80, 'stoch_k_period': 31, 'stoch_k_smooth': 77, 'stoch_d_period': 46, 'leverage': 1},
+    # 기존 288코인
     {'symbol': 'SUSDT', 'ma_period': 141, 'stoch_k_period': 145, 'stoch_k_smooth': 77, 'stoch_d_period': 47, 'leverage': 5},
     {'symbol': 'SOLVUSDT', 'ma_period': 242, 'stoch_k_period': 148, 'stoch_k_smooth': 78, 'stoch_d_period': 42, 'leverage': 5},
     {'symbol': 'RAYSOLUSDT', 'ma_period': 247, 'stoch_k_period': 37, 'stoch_k_smooth': 28, 'stoch_d_period': 14, 'leverage': 5},
@@ -390,6 +398,14 @@ FUTURES_EXCLUDED_COINS = []
 # ============================================================
 
 LONG_TRADING_CONFIGS = [
+    # Bitget 6코인 (롱+숏 파라미터)
+    {'symbol': 'BTCUSDT', 'short_ma': 254, 'short_sk': 27, 'short_sks': 23, 'short_sd': 19, 'long_ma': 350, 'long_sk': 36, 'long_sks': 32, 'long_sd': 10, 'long_lev': 5},
+    {'symbol': 'ETHUSDT', 'short_ma': 220, 'short_sk': 31, 'short_sks': 44, 'short_sd': 26, 'long_ma': 322, 'long_sk': 54, 'long_sks': 10, 'long_sd': 36, 'long_lev': 5},
+    {'symbol': 'XRPUSDT', 'short_ma': 269, 'short_sk': 121, 'short_sks': 35, 'short_sd': 47, 'long_ma': 107, 'long_sk': 14, 'long_sks': 13, 'long_sd': 23, 'long_lev': 5},
+    {'symbol': 'SOLUSDT', 'short_ma': 314, 'short_sk': 37, 'short_sks': 34, 'short_sd': 44, 'long_ma': 73, 'long_sk': 33, 'long_sks': 16, 'long_sd': 38, 'long_lev': 4},
+    {'symbol': 'DOGEUSDT', 'short_ma': 250, 'short_sk': 36, 'short_sks': 15, 'short_sd': 40, 'long_ma': 31, 'long_sk': 48, 'long_sks': 50, 'long_sd': 17, 'long_lev': 2},
+    {'symbol': 'ADAUSDT', 'short_ma': 80, 'short_sk': 31, 'short_sks': 77, 'short_sd': 46, 'long_ma': 296, 'long_sk': 19, 'long_sks': 53, 'long_sd': 15, 'long_lev': 3},
+    # 기존 288코인
     {'symbol': 'SOLVUSDT', 'short_ma': 242, 'short_sk': 148, 'short_sks': 78, 'short_sd': 42, 'long_ma': 143, 'long_sk': 144, 'long_sks': 60, 'long_sd': 31, 'long_lev': 1},
     {'symbol': 'RAYSOLUSDT', 'short_ma': 247, 'short_sk': 37, 'short_sks': 28, 'short_sd': 14, 'long_ma': 194, 'long_sk': 14, 'long_sks': 60, 'long_sd': 14, 'long_lev': 5},
     {'symbol': 'BERAUSDT', 'short_ma': 325, 'short_sk': 15, 'short_sks': 32, 'short_sd': 4, 'long_ma': 32, 'long_sk': 129, 'long_sks': 79, 'long_sd': 49, 'long_lev': 5},
@@ -691,6 +707,14 @@ LONG_EXCLUDED_COINS = []
 # ============================================================
 
 COIN_PRIORITY = {
+    # Bitget 6코인
+    'BTCUSDT': 'long',
+    'ETHUSDT': 'long',
+    'XRPUSDT': 'short',
+    'SOLUSDT': 'long',
+    'DOGEUSDT': 'short',
+    'ADAUSDT': 'short',
+    # 기존 288코인
     'SUSDT': 'short',
     'SOLVUSDT': 'short',
     'RAYSOLUSDT': 'long',
@@ -1106,10 +1130,18 @@ def send_trade_summary(futures_open_list, futures_close_list,
     msg = f"📊 <b>Futures 거래 종합 리포트</b>\n"
     msg += f"━━━━━━━━━━━━━━━\n"
 
+    # 현재 포지션 현황
+    positions = get_all_futures_positions()
+    long_count = sum(1 for p in positions if p['side'] == 'long')
+    short_count = sum(1 for p in positions if p['side'] == 'short')
+    total_slots = get_effective_futures_coins()
+    cash_count = total_slots - long_count - short_count
+
     # Futures 자산
     msg += f"<b>📉📈 USDS-M Futures</b>\n"
     msg += f"💰 총 자산: <b>${futures_total:,.2f}</b>\n"
     msg += f"💵 USDT: ${futures_usdt:,.2f}\n"
+    msg += f"📊 포지션: 🟢롱 {long_count} | 🔴숏 {short_count} | ⬜현금 {cash_count} ({total_slots}슬롯)\n"
     msg += f"━━━━━━━━━━━━━━━\n"
 
     # Futures 숏 진입
