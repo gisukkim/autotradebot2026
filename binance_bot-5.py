@@ -2092,16 +2092,16 @@ def futures_trade_strategy():
                         long_stoch_cond = long_stoch_data.get('long_signal', False)
                         long_signal_active = long_ma_cond and long_stoch_cond
 
-                        final_long_condition = (not short_filter_active) and long_signal_active
+                        # priority 로직이 롱/숏 우선순위를 처리하므로 short_filter 제거
+                        # (우선순위와 short_filter 충돌로 priority='long' 코인이 숏 진입하는 문제 해결)
+                        final_long_condition = long_signal_active
 
-                        logging.info(f"[롱][{symbol}] 현재가: ${current_price:.4f}, Short MA{short_ma_period}: ${short_ma_price:.4f}, Long MA{long_ma_period}: ${long_ma_price:.4f}")
+                        logging.info(f"[롱][{symbol}] 현재가: ${current_price:.4f}, Long MA{long_ma_period}: ${long_ma_price:.4f}")
                         if long_stoch_data:
-                            sk = long_stoch_data.get('short_slow_k', 0)
-                            sd = long_stoch_data.get('short_slow_d', 0)
                             lk = long_stoch_data.get('long_slow_k', 0)
                             ld = long_stoch_data.get('long_slow_d', 0)
-                            logging.info(f"[롱][{symbol}] ShortFilter K:{sk:.2f}/D:{sd:.2f}, LongSignal K:{lk:.2f}/D:{ld:.2f}")
-                        logging.info(f"[롱][{symbol}] ShortFilter:{short_filter_active}, LongSignal:{long_signal_active} → 진입:{final_long_condition}")
+                            logging.info(f"[롱][{symbol}] LongSignal K:{lk:.2f}/D:{ld:.2f}")
+                        logging.info(f"[롱][{symbol}] LongSignal:{long_signal_active} → 진입:{final_long_condition}")
 
                 # ── 의사결정 (코인별 우선순위 적용) ──
                 coin_priority = COIN_PRIORITY.get(symbol, 'short')
@@ -2204,10 +2204,7 @@ def futures_trade_strategy():
                             if symbol in active_position_map:
                                 del active_position_map[symbol]
                     elif current_side == 'long':
-                        if short_filter_active:
-                            reason = "숏 필터 활성 (하락 추세)"
-                        else:
-                            reason = "롱 신호 미충족"
+                        reason = "롱 신호 미충족"
                         result = close_long_position(symbol, reason)
                         if result:
                             long_close_list.append(result)
